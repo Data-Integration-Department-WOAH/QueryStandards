@@ -14,7 +14,7 @@
 library(shiny)
 library(ellmer)
 library(pdftools)
-library(quarto)
+library(quarto) 
 
 # --- 2. Setup: Create necessary directories if they don't exist ---
 # The user must place their PDF files in the 'Norms&Standards' directory.

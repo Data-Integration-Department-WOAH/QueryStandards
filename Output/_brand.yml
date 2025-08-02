@@ -1,0 +1,59 @@
+meta:
+  name:
+    short: WOAH
+    full: World Organisation for Animal Health
+  link:
+    home: https://www.woah.org
+
+# logo:
+#   small: logos/woah-icon.png # A small image, ideally icon-sized. Can be a path to a file or the name of a file in `logo.images`
+#   medium: logos/woah-logo.png # A medium sized logo, ideally small enough for a sidebar logo
+#   large: logos/woah-full-logo.svg # A large logo, e.g. for use in a hero or cover page. ALT: Can refer directly to images in `logo.images`.
+#   images: # Mapping of image names to local files that should be stored next to the _brand.yml file. Users may need to download these files manually.
+#     header: logos/header-logo.png # Each entry maps a name to a local file
+#     header-white: logos/header-logo-white.png
+
+color:
+  palette:
+    orange: "#FF4815"
+    dark-grey: "#27282A"
+    beige: "#EFEEE8"
+    aquatic-blue: "#203CA9" #Only to be applied to Animal Health Codes and Manuals.
+    terrestrial-green: "#009D5E" #Only to be applied to Animal Health Codes and Manuals.
+    pastel-blue: "#DCE9F4" # Only be used as background colours and never as the text colour
+    pastel-yellow: "#FFF2CE" # Only be used as background colours and never as the text colour
+    pastel-pink: "#FFE7F0" # Only be used as background colours and never as the text colour
+    pastel-green: "#DDF3E6" # Only be used as background colours and never as the text colour
+  primary: orange # Main accent color for links, buttons, etc.
+  secondary: dark-grey # Used for lighter text or disabled states. Only include if necessary.
+  background: beige # Main background color, should have high contrast with foreground
+
+typography:
+  fonts:
+    - family: "Söhne Schmal" #Font family name (Official WOAH font Söhne Schmal not easily available, test font dowloaded by Gilles from https://klim.co.nz/test-fonts/)
+      source: file #Source of the font (file, google, bunny, or system)
+      files: #REQUIRED list of font files for `source: file`, which must have at least one font file. Use placeholder names and comment out the source font section if proprietary fonts are used. (And include a Google Font alternative recommendation.)
+        - path: fonts/Söhne-schmal/SöhneSchmal-Buch.ttf #Each file corresponds to a weight and style, both default to "normal".
+          weight: 400 #Optional: specify weight for this file
+          style: normal #Optional: specify style for this file
+        - path: fonts/Söhne-schmal/SöhneSchmal-Kräftig.ttf
+          weight: 600
+          style: normal
+        - path: fonts/Söhne-schmal/SöhneSchmal-Halbfett.ttf
+          weight: 500
+          style: normal
+    - family: "Times Now"
+      source: file #Source of the font (file, google, bunny, or system)
+      files: #REQUIRED list of font files for `source: file`, which must have at least one font file. Use placeholder names and comment out the source font section if proprietary fonts are used. (And include a Google Font alternative recommendation.)
+        - path: fonts/times-now/TimesNow-SemiLight.ttf #Each file corresponds to a weight and style, both default to "normal".
+          weight: 300 #Optional: specify weight for this file
+          style: normal #Optional: specify style for this file
+        - path: fonts/times-now/TimesNow-SemiLightItalic.ttf
+          weight: 300
+          style: italic
+  headings:
+    # family: "Test Söhne Schmal" #Optional: Font family for headings
+    family: "Söhne Schmal" #Optional: Font family for headings
+    weight: 600 #Optional: Font weight for headings
+    color: orange # Sections titles should be in orange
+

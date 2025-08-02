@@ -9,7 +9,7 @@
 # install.packages(c("shiny", "ellmer", "pdftools", "quarto"))
 # You must also have Quarto CLI installed on your system for rendering to work.
 # Finally, set your Google Gemini API key as an environment variable:
-# Sys.setenv(Google_Gemini_API_key = "YOUR_API_KEY_HERE")
+# Sys.setenv(Google_Gemini_API_key = "YOUR_API_KEY_HERE") 
 
 library(shiny)
 library(ellmer)

@@ -9,12 +9,12 @@
 # install.packages(c("shiny", "ellmer", "pdftools", "quarto"))
 # You must also have Quarto CLI installed on your system for rendering to work.
 # Finally, set your Google Gemini API key as an environment variable:
-# Sys.setenv(Google_Gemini_API_key = "YOUR_API_KEY_HERE")
+# Sys.setenv(Google_Gemini_API_key = "YOUR_API_KEY_HERE") 
 
 library(shiny)
 library(ellmer)
 library(pdftools)
-library(quarto)
+library(quarto) 
 
 # --- 2. Setup: Create necessary directories if they don't exist ---
 # The user must place their PDF files in the 'Norms&Standards' directory.
@@ -158,13 +158,18 @@ server <- function(input, output, session) {
         "\n* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
         "\n* For each instance found:",
         "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
-        "  - provide the full paragraph where the instance is found.",
-        "  - highlight the instance found using Quarto's highlight syntax, like this:  '**This is the highlighted instance**'  ",
+        "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
+        "  - highlight in yellow the instance found using Quarto's highlight syntax, like this:  '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'  ",
         "\n* Provide your answer in the form of a neat Quarto .qmd document.",
-        "   - The Quarto doc should contained  toc:true in the yaml ",
-        "  - Use a level-1 header for the main title (e.g., `# Document Analysis`).",
-        " -  Make sure the Quarto document generated a slef-contained html file",
-        "  - Use level-2 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
+        "   - The Quarto yaml must contain ",
+        "      title: \"Document Analysis\" ",
+        "      toc: true  ",
+        "      toc-depth: 3",
+         "     date: date-modified",
+        "      number-sections: true",
+        "      self-contained: true  ",
+        # "  - Use a level-1 header for the main title (e.g., `# Document Analysis`).",
+         "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
         "  - If no instances are found for a term, state that clearly under its header.",
         "\n\n--- DOCUMENT TEXT ---",
         "\n", all_text

@@ -1,45 +1,34 @@
-# --- R/Shiny App: AI Assistant for PDF Document Interrogation ---
-
-# This app allows users to interrogate a collection of PDF documents using an AI assistant (Google Gemini).
-# It extracts text from PDFs, sends it to the AI with user-defined keywords,
-# and renders the AI's response as a formatted report.
-
-# --- 1. Package Dependencies ---
-# Please ensure you have the following packages installed:
-# install.packages(c("shiny", "ellmer", "pdftools", "quarto"))
-# You must also have Quarto CLI installed on your system for rendering to work.
-# Finally, set your Google Gemini API key as an environment variable:
-# Sys.setenv(Google_Gemini_API_key = "YOUR_API_KEY_HERE") 
-
 library(shiny)
 library(ellmer)
 library(pdftools)
-library(quarto) 
+library(quarto)
+library(DT)
 
-# --- 2. Setup: Create necessary directories if they don't exist ---
-# The user must place their PDF files in the 'Norms&Standards' directory.
-if (!dir.exists("Norms&Standards")) {
-  dir.create("Norms&Standards")
-}
-# The app will save AI-generated reports in the 'Output' directory.
-if (!dir.exists("Output")) {
-  dir.create("Output")
-}
+# --- Directory Setup ---
+if (!dir.exists("Norms&Standards")) dir.create("Norms&Standards")
+if (!dir.exists("Output")) dir.create("Output")
 
-# --- 3. UI Definition ---
+# --- UI ---
 ui <- fluidPage(
   titlePanel("AI Assistant for PDF Document Interrogation"),
   
   sidebarLayout(
     sidebarPanel(
       width = 3,
+      
       h4("Configuration"),
       
-      # Display the list of PDF files found in the directory
+      # Warning about sensitive data
+      div(style = "color: red; font-weight: bold;",
+          "⚠️ Warning: PDF content will be sent to Google Gemini for analysis. Do not upload confidential or sensitive documents."
+      ),
+      br(),
+      
+      # PDF File List
       h5("Detected PDF Files:"),
       verbatimTextOutput("file_list_output"),
       
-      # Text area for user to input keywords, pre-populated with examples
+      # Keywords Input
       textAreaInput(
         inputId = "keywords_input",
         label = "Enter Keywords/Expressions (one per line):",
@@ -47,51 +36,190 @@ ui <- fluidPage(
         rows = 5
       ),
       
-      # Action button to start the analysis
+      # Prompt Editing
+      # textAreaInput(
+      #   inputId = "prompt_template",
+      #   label = "AI Prompt (You can edit before sending):",
+      #   value = paste(
+      #     "Based on the document text provided below, perform the following tasks for the user's queried terms jointly:",
+      #     "Queried Terms: \n<<KEYWORDS>>",
+      #     "\n\n--- INSTRUCTIONS ---",
+      #     "* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
+      #     "* For each instance found:",
+      #     "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
+      #     "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
+      #     "  - highlight in yellow the instance found using Quarto's highlight syntax, like this:  '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'",
+      #     "* Provide your answer in the form of a neat Quarto .qmd document.",
+      #     "   - The Quarto yaml must contain",
+      #     "      title: \"Document Analysis\"",
+      #     "      toc: true",
+      #     "      toc-depth: 3",
+      #     "      date: date-modified",
+      #     "      number-sections: true",
+      #     "      self-contained: true",
+      #     "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
+      #     "  - If no instances are found for a term, state that clearly under its header.",
+      #     "\n\n--- DOCUMENT TEXT ---\n<<DOCUMENT_TEXT>>",
+      #     sep = "\n"
+      #   ),
+      #   rows = 20
+      # ),
+      
+  #     # Prompt Editing - in collapsible, styled panel
+  #     tags$div(
+  #       style = "margin-top: 20px;",
+  #       shiny::tags$details(
+  #         open = FALSE,
+  #         shiny::tags$summary(strong("✏️ Edit AI Prompt (Advanced)")),
+  #         textAreaInput(
+  #           inputId = "prompt_template",
+  #           label = NULL,
+  #           value = paste(
+  #             "Based on the document text provided below, perform the following tasks for the user's queried terms jointly:",
+  #             "Queried Terms: \n<<KEYWORDS>>",
+  #             "\n\n--- INSTRUCTIONS ---",
+  #             "* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
+  #             "* For each instance found:",
+  #             "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
+  #             "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
+  #             "  - highlight in yellow the instance found using Quarto's highlight syntax, like this:  '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'",
+  #             "* Provide your answer in the form of a neat Quarto .qmd document.",
+  #             "   - The Quarto yaml must contain",
+  #             "      title: \"Document Analysis\"",
+  #             "      toc: true",
+  #             "      toc-depth: 3",
+  #             "      date: date-modified",
+  #             "      number-sections: true",
+  #             "      self-contained: true",
+  #             "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
+  #             "  - If no instances are found for a term, state that clearly under its header.",
+  #             "\n\n--- DOCUMENT TEXT ---\n<<DOCUMENT_TEXT>>",
+  #             sep = "\n"
+  #           ),
+  #           rows = 20,
+  #           placeholder = "Modify the prompt before sending to Gemini...",
+  #           width = "100%"
+  #         )
+  #       ),
+  #       tags$style(HTML("
+  #   textarea.form-control {
+  #     font-family: 'Courier New', monospace;
+  #     background-color: #f8f9fa;
+  #     border: 1px solid #ced4da;
+  #   }
+  # "))
+  #     ),
+  
+  
+  # Task and Output Format Prompt Split
+  tags$div(
+    style = "margin-top: 20px;",
+    
+    # Task Description Panel
+    tags$details(
+      open = FALSE,
+      tags$summary(strong("🧠 Task Description")),
+      textAreaInput(
+        inputId = "prompt_task",
+        label = NULL,
+        value = paste(
+          "Based on the document text provided below, perform the following tasks for the user's queried terms jointly:",
+          "Queried Terms: \n<<KEYWORDS>>",
+          "* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
+          "* For each instance found:",
+          "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
+          "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
+          "  - highlight in yellow the instance found using Quarto's highlight syntax, like this: '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'",
+          sep = "\n"
+        ),
+        rows = 10,
+        width = "100%",
+        placeholder = "Define what the AI should do with the input document..."
+      )
+    ),
+    
+    # Output Format Panel
+    tags$details(
+      open = FALSE,
+      tags$summary(strong("📄 Output Format Instructions")),
+      textAreaInput(
+        inputId = "prompt_format",
+        label = NULL,
+        value = paste(
+          "* Provide your answer in the form of a neat Quarto .qmd document.",
+          "  - The Quarto yaml must contain:",
+          "      title: \"Document Analysis\"",
+          "      toc: true",
+          "      toc-depth: 3",
+          "      date: date-modified",
+          "      number-sections: true",
+          "      self-contained: true",
+          "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
+          "  - If no instances are found for a term, state that clearly under its header.",
+          sep = "\n"
+        ),
+        rows = 10,
+        width = "100%",
+        placeholder = "Specify how the AI should structure its response..."
+      )
+    ),
+    
+    tags$style(HTML("
+    textarea.form-control {
+      font-family: 'Courier New', monospace;
+      background-color: #f8f9fa;
+      border: 1px solid #ced4da;
+    }
+  "))
+  ),
+  
+      
+      # Report name input
+      textInput("report_name", "Report Name (optional):", placeholder = "Leave blank for automatic timestamp name"),
+      
+      # Run Button
       actionButton("run_query_button", "Run AI Analysis", icon = icon("robot"), width = "100%"),
       
       hr(),
       helpText(
         strong("Instructions:"),
         br(),
-        "1. Place PDF files in the 'Norms&Standards' folder within the app's directory.",
+        "1. Place PDF files in the 'Norms&Standards' folder.",
         br(),
-        "2. The app will list the detected PDFs above.",
+        "2. Provide keywords and/or modify the AI prompt.",
         br(),
-        "3. Enter keywords or phrases to search for.",
-        br(),
-        "4. Click 'Run AI Analysis' and wait for the report to be generated."
+        "3. Click the Run button to generate the report."
       )
     ),
     
     mainPanel(
       width = 9,
       h4("Analysis Report"),
-      # UI Output to render the Quarto HTML document
-      uiOutput("quarto_output")
+      fluidRow(
+        column(
+          width = 6,
+          uiOutput("quarto_output")
+        ),
+        column(
+          width = 6,
+          h5("Extracted Findings Table"),
+          DTOutput("findings_table")
+        )
+      )
     )
   )
 )
 
-# --- 4. Server Logic ---
+# --- SERVER ---
 server <- function(input, output, session) {
   
-  # Reactive value to store the path to the rendered HTML report
   report_path <- reactiveVal(NULL)
+  findings_table_data <- reactiveVal(data.frame())
   
-  # --- UI Rendering for Input Panel ---
-  
-  # Reactive expression to get the list of PDF files
   pdf_files <- reactive({
-    list.files(
-      path = "Norms&Standards",
-      pattern = "\\.pdf$",
-      full.names = TRUE,
-      ignore.case = TRUE
-    )
+    list.files("Norms&Standards", pattern = "\\.pdf$", full.names = TRUE, ignore.case = TRUE)
   })
   
-  # Render the list of detected file names
   output$file_list_output <- renderPrint({
     files <- basename(pdf_files())
     if (length(files) == 0) {
@@ -101,18 +229,14 @@ server <- function(input, output, session) {
     }
   })
   
-  # --- Core Logic on Button Click ---
-  
   observeEvent(input$run_query_button, {
     
-    # --- 4a. Initial Checks ---
     api_key <- Sys.getenv("Google_Gemini_API_key")
     if (nchar(api_key) == 0) {
       showModal(modalDialog(
         title = "Error: API Key Not Found",
         "The 'Google_Gemini_API_key' environment variable is not set.",
-        "Please set the environment variable and restart the R session.",
-        easyClose = TRUE, footer = NULL
+        easyClose = TRUE
       ))
       return()
     }
@@ -127,119 +251,108 @@ server <- function(input, output, session) {
       return()
     }
     
-    # --- 4b. Processing with Progress Indicator ---
     withProgress(message = 'AI analysis in progress...', value = 0, {
-      
-      # Reset previous report to clear the display
       report_path(NULL)
+      findings_table_data(data.frame())
       
-      incProgress(0.1, detail = "Loading PDF documents...")
-      
-      # Load and concatenate text from all PDF files
-     
+      incProgress(0.1, detail = "Loading PDFs...")
       all_text <- tryCatch({
-        text_list <- lapply(pdf_files(), pdftools::pdf_text)
+        text_list <- lapply(pdf_files(), pdf_text)
         paste(unlist(text_list), collapse = "\n\n--- END OF PAGE ---\n\n")
       }, error = function(e) {
         showNotification(paste("Error reading PDF files:", e$message), type = "error")
         return(NULL)
       })
-      
       if (is.null(all_text)) return()
       
-      incProgress(0.2, detail = "Preparing prompt for AI...")
+      incProgress(0.2, detail = "Preparing prompt...")
+      # prompt <- gsub("<<KEYWORDS>>", input$keywords_input, input$prompt_template)
+      task_part <- gsub("<<KEYWORDS>>", input$keywords_input, input$prompt_task)
+      format_part <- input$prompt_format
       
-      # Define the prompt for the Gemini model
-      # Note: We give a very structured prompt to guide the AI for better results.
       prompt <- paste(
-        "Based on the document text provided below, perform the following tasks for the user's queried terms jointly:",
-        "Queried Terms: \n", input$keywords_input,
-        "\n\n--- INSTRUCTIONS ---",
-        "\n* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
-        "\n* For each instance found:",
-        "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
-        "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
-        "  - highlight in yellow the instance found using Quarto's highlight syntax, like this:  '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'  ",
-        "\n* Provide your answer in the form of a neat Quarto .qmd document.",
-        "   - The Quarto yaml must contain ",
-        "      title: \"Document Analysis\" ",
-        "      toc: true  ",
-        "      toc-depth: 3",
-         "     date: date-modified",
-        "      number-sections: true",
-        "      self-contained: true  ",
-        # "  - Use a level-1 header for the main title (e.g., `# Document Analysis`).",
-         "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
-        "  - If no instances are found for a term, state that clearly under its header.",
-        "\n\n--- DOCUMENT TEXT ---",
-        "\n", all_text
+        task_part,
+        "\n\n--- DOCUMENT TEXT ---\n",
+        all_text,
+        "\n\n--- OUTPUT FORMAT ---\n",
+        format_part,
+        sep = "\n"
       )
+      prompt <- gsub("<<DOCUMENT_TEXT>>", all_text, prompt)
       
-      incProgress(0.3, detail = "Querying Google Gemini AI...")
-      
-      # Call Gemini API
+      incProgress(0.3, detail = "Querying Gemini...")
       ai_response <- tryCatch({
-        client_query <- ellmer::chat_google_gemini(api_key = api_key)
-        client_query$chat(prompt,echo=FALSE)
+        ellmer::chat_google_gemini(api_key = api_key)$chat(prompt, echo = FALSE)
       }, error = function(e) {
         showNotification(paste("AI API Error:", e$message), type = "error")
         return(NULL)
       })
-      
       if (is.null(ai_response)) return()
       
-      incProgress(0.8, detail = "Saving and rendering report...")
+      incProgress(0.8, detail = "Saving & rendering...")
       
-      # Define file paths for the Quarto document and its HTML output
-      qmd_path <- file.path("Output", "ai_report.qmd")
-      html_path <- file.path("Output", "ai_report.html")
+      # Create timestamped or custom report file names
+      timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+      base_name <- ifelse(nchar(trimws(input$report_name)) > 0,
+                          gsub("\\s+", "_", trimws(input$report_name)),
+                          paste0("ai_report_", timestamp))
+      qmd_path <- file.path("Output", paste0(base_name, ".qmd"))
+      html_path <- file.path("Output", paste0(base_name, ".html"))
       
-      # Clean the AI response to remove potential code fences
       clean_response <- gsub("(^```\\w*\\s*|```$)", "", ai_response)
       writeLines(clean_response, qmd_path)
       
-      # Render the QMD file to HTML using the quarto package
-      quarto::quarto_render(qmd_path, output_format = "html", quiet = TRUE)
+      tryCatch({
+        quarto::quarto_render(qmd_path, output_format = "html", quiet = TRUE)
+      }, error = function(e) {
+        showNotification(paste("Quarto rendering error:", e$message), type = "error")
+        return(NULL)
+      })
       
-      # Set the reactive value to the path of the generated HTML file
       if (file.exists(html_path)) {
         report_path(html_path)
         incProgress(1, detail = "Done!")
-        showNotification("Analysis complete! Report generated.", type = "message")
+        showNotification("Analysis complete. Report generated.", type = "message")
+        
+        # Basic regex to extract findings for table (could be improved)
+        findings <- regmatches(clean_response, gregexpr("(?<=\\#\\# Findings for ')(.*?)(?=')", clean_response, perl=TRUE))[[1]]
+        if (length(findings) > 0) {
+          findings_table_data(data.frame(Term = findings))
+        }
+        
       } else {
-        showNotification("Error: Failed to render the Quarto report.", type = "error")
+        showNotification("Error: Report not generated.", type = "error")
       }
     })
   })
   
-  # --- UI Rendering for Output Panel ---
-  
-  # Render the final HTML report in an iframe
+  # Quarto Report Renderer
   output$quarto_output <- renderUI({
     path <- report_path()
     if (!is.null(path) && file.exists(path)) {
-      # Add a random query parameter to the URL to force browser refresh
-      # This is crucial if the user runs the analysis multiple times
       url_with_cache_buster <- paste0("Output/", basename(path), "?", as.integer(Sys.time()))
       tags$iframe(
         src = url_with_cache_buster,
         width = '100%',
         height = '800px',
-        style = "border: 1px solid #ddd;"
+        style = "border: 1px solid #ccc;"
       )
     } else {
-      # Default message before any analysis is run
-      HTML("<div style='text-align: center; color: grey; margin-top: 50px;'>
-             <p>The generated report will be displayed here.</p>
-           </div>")
+      HTML("<p style='color: grey; text-align: center; margin-top: 50px;'>The generated report will be displayed here.</p>")
     }
   })
   
-  # To serve the generated HTML file, we must register the 'Output' directory
-  addResourcePath("Output", "Output")
+  # Findings Table Renderer
+  output$findings_table <- renderDT({
+    datatable(
+      findings_table_data(),
+      options = list(pageLength = 10, searchHighlight = TRUE),
+      rownames = FALSE
+    )
+  })
   
+  addResourcePath("Output", "Output")
 }
 
-# --- 5. Run the Application ---
+# --- Run App ---
 shinyApp(ui = ui, server = server)
-

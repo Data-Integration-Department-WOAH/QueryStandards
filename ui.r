@@ -39,6 +39,7 @@ ui <- fluidPage(
         style = "margin-top: 20px;",
         
         # Task Description Panel
+       
         tags$details(
           open = FALSE,
           tags$summary(strong("🧠 Task Description")),
@@ -46,15 +47,27 @@ ui <- fluidPage(
             inputId = "prompt_task",
             label = NULL,
             value = paste(
-              "Based on the document text provided below, perform the following tasks for the user's queried terms jointly:",
-              "Queried Terms: \n<<KEYWORDS>>",
-              "* Search and extract instances of any of the queried terms (or any close synonym) in the pdf files.",
-              "* For each instance found:",
-              "  - provide the chapter, section and page where the instance is found. If this information is not in the text, state 'Context not available'.",
-              "  - provide the full paragraph where the instance is found (but do not quote the instance as ```instance```).",
-              "  - highlight in yellow the instance found using Quarto's highlight syntax, like this: '<span style=\"background-color: yellow\"> This text is highlighted in yellow </span>'",
-              sep = "\n"
-            ),
+              "### Instructions",
+              "Based on the document text provided below, please complete the following tasks for the queried keyword:",
+              
+              "### Queried keyword:",
+              "  <<KEYWORDS>> ",
+
+              "### Tasks: ",
+              "1. **Search and Extraction:**",
+              "  - Locate instances of queried keyword or close synonyms within the PDF files.",
+              
+              "2. **Detailed Reporting for Each Keyword Instance Found:**",
+                "- **Location Information:**",
+                "- Identify and provide the chapter, section, and page number where the instance is located. If this information is absent, include the statement: 'Context not available.'",
+              "- **Contextual Paragraph:**",
+                "- Extract and present the full paragraph containing the instance, ensuring the instance itself is not quoted as ```instance```.",
+                "- Highlight the identified keyword instance using Quarto's syntax: `<span style=\"background-color: yellow\"> keyword </span>`",
+
+              "Please ensure clarity and precision in the results for improved readability and accuracy.\n",
+              # "**Do not omit any keyword under any circumstance.**",
+              sep=" \n "),
+            
             rows = 10,
             width = "100%",
             placeholder = "Define what the AI should do with the input document..."
@@ -70,16 +83,10 @@ ui <- fluidPage(
             label = NULL,
             value = paste(
               "* Provide your answer in the form of a neat Quarto .qmd document following strictly the specifications below:",
-              "  - Use level-1 headers for each queried term (e.g., `## Findings for 'notifiable disease'`).",
-              "  - If no instances are found for a term, state that clearly under its header.",
-              "  - The Quarto yaml must contain exactly the lines below:",
-              "      title: \"Document Analysis\"",
-              "      toc: true",
-              "      toc-depth: 3",
-              "      date: last-modified",
-              "      number-sections: true",
-              "      self-contained: true",
-              
+              "  - Use level-2 headers for each instance ",#queried term (e.g., `## Findings for 'notifiable disease'`).",
+              "  - If no instances are found for a keyword, state that clearly under its header.",
+              "  - Do not include a yaml header in the qmd file",
+              "  - Do not add markup such as {.qmd} in the qmd file ",
               sep = "\n"
             ),
             rows = 10,

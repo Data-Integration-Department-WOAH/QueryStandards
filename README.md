@@ -19,5 +19,5 @@ gitcreds::gitcreds_set()
 - File -> New Project -> Version control -> Git
 
 - Repository url:   https://github.com/Data-Integration-Department-WOAH/QueryStandards.git
-Project directory name: whatever (e.g. QueryStandards)
-Create project as a subdirectory of: anywhere 
+- Project directory name: whatever (e.g. QueryStandards)
+- Create project as a subdirectory of: anywhere 

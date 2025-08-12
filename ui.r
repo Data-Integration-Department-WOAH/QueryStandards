@@ -61,7 +61,8 @@ ui <- fluidPage(
                 "- **Location Information:**",
                 "- Identify and provide the chapter, section, and page number where the instance is located. If this information is absent, include the statement: 'Context not available.'",
               "- **Contextual Paragraph:**",
-                "- Extract and present the full paragraph containing the instance, ensuring the instance itself is not quoted as ```instance```.",
+                "- Extract and present the full paragraph containing the instance, ensuring ",
+                "- Do not include the instance itself in quotes as ```instance``` **under any circumstances**.",
                 "- Highlight the identified keyword instance using Quarto's syntax: `<span style=\"background-color: yellow\"> keyword </span>`",
 
               "Please ensure clarity and precision in the results for improved readability and accuracy.\n",

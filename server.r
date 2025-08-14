@@ -77,7 +77,7 @@ server <- function(input, output, session) {
       #   keyword <- keywords[[i]]
       #   print(keywords)
       #   print(keyword)
-      #   }
+      #   } 
       
       for (i in seq_along(keywords)) {
         keyword <- keywords[[i]]
@@ -136,7 +136,7 @@ server <- function(input, output, session) {
         "title: \"Keyword query\"",
         paste0("date: last-modified"),
         "format: ",
-        "  html:",
+        "  docx:",
         "    toc: true",
         "    toc-depth: 3",
         "    number-sections: true",
@@ -150,7 +150,7 @@ server <- function(input, output, session) {
       
       # Render the Quarto file
       tryCatch({
-        quarto::quarto_render(qmd_path, output_format = "html", quiet = TRUE)
+        quarto::quarto_render(qmd_path, output_format = "docx", quiet = TRUE)
       }, error = function(e) {
         showNotification(paste("Quarto rendering error:", e$message), type = "error")
         return(NULL)

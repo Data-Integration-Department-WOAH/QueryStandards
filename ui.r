@@ -63,7 +63,8 @@ ui <- fluidPage(
               "- **Contextual Paragraph:**",
                 "- Extract and present the full paragraph containing the instance, ensuring ",
                 "- Do not include the instance itself in quotes as ```instance``` **under any circumstances**.",
-                "- Highlight the identified keyword instance using Quarto's syntax: `<span style=\"background-color: yellow\"> keyword </span>`",
+                # "- Highlight the identified keyword instance using Quarto's syntax: `<span style=\"background-color: yellow\"> keyword </span>`",
+              "- Highlight the identified keyword instance using Quarto's syntax: **keyword**",
 
               "Please ensure clarity and precision in the results for improved readability and accuracy.\n",
               # "**Do not omit any keyword under any circumstance.**",

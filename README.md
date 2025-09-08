@@ -1,6 +1,6 @@
 # QueryStandards
 
- This repository contains an R Shiny appo to query pdf dociment with an LLM
+ This repository contains an R Shiny app to query pdf documents with an LLM
 
 ## Instructions to connect Github to Rstudio
 
